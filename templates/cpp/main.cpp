@@ -25,6 +25,7 @@ void solve2(std::vector<std::string> &data) {
 int main() {
     std::vector<std::string> data;
     load_data(data);
-
+    solve1(data);
+    solve2(data);
     return 0;
 }
