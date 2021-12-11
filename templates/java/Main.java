@@ -21,11 +21,11 @@ public class Main {
     }
 
     public static void solve1(List<String> lines) {
-
+        System.out.printf("Solution 1: %d\n", 0);
     }
 
     public static void solve2(List<String> lines) {
-
+        System.out.printf("Solution 2: %d\n", 0);
     }
     
     public static void main(String[] args) {
