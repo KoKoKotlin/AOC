@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,7 +15,7 @@ public class Main {
         List<String> lines = null;
 
         try {
-            BufferedReader bReader = Files.newBufferedReader(Paths.get("test.txt"));
+            BufferedReader bReader = Files.newBufferedReader(Paths.get("data.txt"));
             lines = bReader.lines().collect(Collectors.toList());
         } catch (IOException e) { }
         
@@ -35,17 +36,17 @@ public class Main {
     }
 
     public static void solve1(List<String> lines) {
-        Deque<String> stack = new ArrayDeque<>();
         int score = 0;
         for (String line : lines) {
+            Deque<String> stack = new ArrayDeque<>();
             for (String symbol : line.split("")) {
                 switch(symbol) {
                     case "(", "[", "{", "<" -> {
-                        stack.push(symbol);
+                        stack.addFirst(symbol);
                     }
 
                     case ")", "]", "}", ">" -> {
-                        String symbol2 = stack.pop();
+                        String symbol2 = stack.removeFirst();
 
                         if (!(symbol.equals(")") && symbol2.equals("(") ||
                             symbol.equals("]") && symbol2.equals("[") ||
@@ -63,57 +64,56 @@ public class Main {
     }
 
     public static void solve2(List<String> lines) {
-        Deque<String> stack = new ArrayDeque<>();
+        List<Long> scores = new ArrayList<>();
 
-        List<Integer> scores = new ArrayList<>();
         for (String line : lines) {
+            Deque<Character> stack = new LinkedList<>();
             boolean isCorrupted = false;
-            for (String symbol : line.split("")) {
+            inner: for (int i = 0; i < line.length(); i++) {
+                char symbol = line.charAt(i);
                 switch(symbol) {
-                    case "(", "[", "{", "<" -> {
-                        stack.push(symbol);
+                    case '(', '[', '{', '<' -> {
+                        stack.addFirst(symbol);
                     }
 
-                    case ")", "]", "}", ">" -> {
-                        String symbol2 = stack.pop();
+                    default -> {
+                        char symbol2 = stack.removeFirst();
 
-                        if (!(symbol.equals(")") && symbol2.equals("(") ||
-                            symbol.equals("]") && symbol2.equals("[") ||
-                            symbol.equals("}") && symbol2.equals("{") ||
-                            symbol.equals(">") && symbol2.equals("<"))) {
-                                isCorrupted = true;
-                                break;
-                            }
+                        if (!(symbol == ')' && symbol2 == '(' ||
+                              symbol == ']' && symbol2 == '[' ||
+                              symbol == '}' && symbol2 == '{' ||
+                              symbol == '>' && symbol2 == '<')) {
+                            isCorrupted = true;
+                            break inner;
+                        }
                     }
                 }
             }
 
             if (!isCorrupted) {
-                int score = 0;
-                System.out.printf("Stack size: %d\n", stack.size());
+                long score = 0;
                 while (!stack.isEmpty()) {
-                    String symbol = stack.pop();
-                    System.out.print(symbol);
-                    score *= 5;
+                    char symbol = stack.removeFirst();
+                    score *= 5L;
                     switch (symbol) {
-                        case "(" -> { score += 1; }
-                        case "[" -> { score += 2; }
-                        case "{" -> { score += 3; }
-                        case "<" -> { score += 4; }
+                        case '(' -> { score += 1L; }
+                        case '[' -> { score += 2L; }
+                        case '{' -> { score += 3L; }
+                        case '<' -> { score += 4L; }
                         default -> { throw new IllegalStateException("Symbol not found!"); }
                     }
                 }
-
                 scores.add(score);
-                System.out.println("\n" + score);
             }
         }
 
 
         scores.sort((i1, i2) -> {
-            return (i1 < i2) ? i1 : i2;
+            if (i1 < i2) return -1;
+            else if (i1 > i2) return 1;
+            else return 0;
         });
-        System.out.printf("Solution 2: %d\n", scores.get(scores.size() / 2 + 1));
+        System.out.printf("Solution 2: %d\n", scores.get(scores.size() / 2));
     }
     
     public static void main(String[] args) {
