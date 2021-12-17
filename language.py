@@ -2,7 +2,7 @@ from random import choice
 from sys import argv
 import os
 
-if len(argv) != 3 or len(argv) != 4:
+if len(argv) not in [3, 4]:
     print(f"Usage: python3 language.py <year> <day> [<language>]")
 
 languages = ["python", "kotlin", "java", "rust", "c", "cpp", "perl", "haskell", "ruby", "js"]
