@@ -19,7 +19,7 @@ print(f"Next language will be: {lang}.")
 FOLDER_NAME = f"aoc{year}/{day}"
 
 if os.path.exists(FOLDER_NAME):
-    answer = input(f"The folder for aoc {2021} day {day} already exits! Do you want to override it? [y/N]: ")
+    answer = input(f"The folder for aoc {year} day {day} already exits! Do you want to override it? [y/N]: ")
     if answer not in ["y", "Y", "yes", "Yes"]: 
         print("Exiting ...")
         exit(0)
