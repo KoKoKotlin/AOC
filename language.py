@@ -4,6 +4,7 @@ import os
 
 if len(argv) not in [3, 4]:
     print(f"Usage: python3 language.py <year> <day> [<language>]")
+    exit(0)
 
 languages = ["python", "kotlin", "java", "rust", "c", "cpp", "perl", "haskell", "ruby", "js"]
 
