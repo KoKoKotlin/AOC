@@ -16,8 +16,18 @@ if len(argv) == 1:
 
 print(f"Next language will be: {lang}.")
 
-os.system(f"mkdir -p aoc{year}/{day}")
-os.system(f"cp -rf templates/{lang}/* aoc{year}/{day}/")
-os.system(f"chmod +x aoc{year}/{day}/run.sh")
-os.system(f"touch aoc{year}/{day}/data.txt")
-os.system(f"touch aoc{year}/{day}/test.txt")
+FOLDER_NAME = f"aoc{year}/{day}"
+
+if os.path.exists(FOLDER_NAME):
+    answer = input(f"The folder for aoc {2021} day {day} already exits! Do you want to override it? [y/N]: ")
+    if answer not in ["y", "Y", "yes", "Yes"]: 
+        print("Exiting ...")
+        exit(0)
+    else:
+        print("Overriding ...")
+
+os.system(f"mkdir -p {FOLDER_NAME}")
+os.system(f"cp -rf templates/{lang}/* {FOLDER_NAME}/")
+os.system(f"chmod +x {FOLDER_NAME}/run.sh")
+os.system(f"touch {FOLDER_NAME}/data.txt")
+os.system(f"touch {FOLDER_NAME}/test.txt")
