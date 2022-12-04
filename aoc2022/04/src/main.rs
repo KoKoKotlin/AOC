@@ -44,5 +44,5 @@ fn main() {
         .filter(|(r1, r2)| range_overlaps(r1, r2))
         .count();
 
-    println!("Solution 1: {}", res);
+    println!("Solution 2: {}", res);
 }
