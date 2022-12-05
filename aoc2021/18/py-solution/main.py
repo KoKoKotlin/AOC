@@ -1,5 +1,6 @@
 from math import ceil, floor
-import sys
+from copy import deepcopy
+from itertools import product
 
 class Leaf:
     def __init__(self, value, parent):
@@ -33,7 +34,6 @@ def reduce(root):
         current = stack.pop(0)
         
         if explode(current): 
-            print(root, "\t\t\texplode")
             return True
         
         if isinstance(current, Node):
@@ -44,7 +44,6 @@ def reduce(root):
     while len(stack) != 0:
         current = stack.pop(0)
         if split(current): 
-            print(root, "\t\t\tsplit")
             return True
         
         if isinstance(current, Node):
@@ -190,12 +189,13 @@ def main():
         for line in f:
             nums.append(parse_line(line.strip()))
     
-    res = nums[0]
+    res = deepcopy(nums[0])
     for i in range(1, len(nums)):
-        res = add(res, nums[i])
-        print(res, file=sys.stderr)
-    print(res)
-    print("Magnitude:", magnitude(res))
+        res = add(res, deepcopy(nums[i]))
+    print("Solution 1:", magnitude(res))
+    
+    mags = list(map(lambda x: magnitude(add(deepcopy(x[0]), deepcopy(x[1]))), product(nums, nums)))
+    print("Solution 2:", max(mags))
 
 if __name__ == "__main__":
     main()
