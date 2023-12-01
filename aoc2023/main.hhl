@@ -1,6 +1,9 @@
 import "Option.hhl";
 import "String.hhl";
 
+var s = readfile "input.txt";
+var ls = call lines s;
+
 func parse_line line start
     var first_digit = (call opt_none), last_digit;
 
@@ -20,8 +23,6 @@ func parse_line line start
 end
 
 func sol1 start
-    var s = readfile "input.txt";
-    var ls = call lines s;
     var line_list = ls.list;
 
     var i = 0, res = 0;
@@ -78,18 +79,17 @@ func parse_line2 line start
     return parse_int ((to_string first_digit.some) + (to_string last_digit));
 end
 
-call sol1;
+func sol2 start
+    var ll = call dl_to_list ls;
 
-# due to a bug in the interpreter, this can't be in its own function
-# TODO: put into its own function, when bug is fixed
-var s = readfile "input.txt";
-var ll = call dl_to_list (call lines s);
-
-var i = 0, result = 0, parsed_line, p;
-while i < (len ll) do
-    p = call parse_line2 ll[i];
-    result = result + p;
-    i = i + 1;
+    var i = 0, result = 0, parsed_line, p;
+    while i < (len ll) do
+        p = call parse_line2 ll[i];
+        result = result + p;
+        i = i + 1;
+    end
+println "Solution 2: ", result;
 end
 
-println "Solution 2: ", result;
+call sol1;
+call sol2;
