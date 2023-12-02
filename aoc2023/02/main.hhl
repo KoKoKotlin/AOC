@@ -1,0 +1,134 @@
+import "String.hhl";
+import "DynList.hhl";
+
+record Turn start 
+    red
+    green
+    blue
+end
+
+var input = readfile "input.txt";
+var ls = call lines input;
+ls = call dl_to_list ls;
+
+func parse_line line start
+    var opt_idx = call str_find line ':';
+    var start_idx = opt_idx.some + 1;
+
+    line = call substr line start_idx (len line);
+    line = call trim line;
+
+    var turn = call split line ';';
+    turn = call dl_to_list turn;
+    
+    var i = 0;
+    var turns = call dl_create 100;
+    while i < (len turn) do
+        var parts = call split turn[i] ',';
+        parts = call dl_to_list parts;
+
+        var j = 0;
+        var curr_turn = new Turn(0, 0, 0);
+        while j < (len parts) do
+            var part = parts[j];
+            part = call trim part;
+            part = call split part ' ';
+            part = call dl_to_list part;
+
+            if part[1] == "blue" then
+                curr_turn.blue = parse_int part[0];
+            end
+
+            if part[1] == "green" then
+                curr_turn.green = parse_int part[0];
+            end
+            
+            if part[1] == "red" then
+                curr_turn.red = parse_int part[0];
+            end
+            j = j + 1;
+        end
+
+        call dl_push turns curr_turn;
+        i = i + 1;
+    end
+
+    return turns;
+end
+
+func parse_games start
+    var i = 0, games = call dl_create 10;
+    while i < (len ls) do
+        var game = call parse_line ls[i];
+        game = call dl_to_list game;
+        call dl_push games game;
+        i = i + 1;
+    end
+    games = call dl_to_list games;
+    return games;
+end
+
+func sol1 start
+    let max_red = 12;
+    let max_green = 13;
+    let max_blue = 14;
+    
+    var games = call parse_games;
+
+    var j = 0, result = 0;
+    while j < (len games) do
+        var i = 0;
+        var turns = games[j];
+        var is_possible = true;
+        
+        while i < (len turns) do
+            var turn = turns[i];
+            if !((turn.red <= max_red) and (turn.green <= max_green) and (turn.blue <= max_blue)) then
+                is_possible = false;
+                break;
+            end
+            i = i + 1;
+        end
+
+        if is_possible then        
+            result = result + j + 1;
+        end
+        j = j + 1;
+    end
+
+    println "Solution 1: ", result;
+end
+
+func max a b start
+    if a < b then
+        return b;
+    else
+        return a;
+    end
+end
+
+func sol2 start
+    var games = call parse_games;
+
+    var i = 0, result = 0;
+    while i < (len games) do
+        var turns = games[i];
+        var max_red = 0, max_blue = 0, max_green = 0;
+        
+        var j = 0;
+        while j < (len turns) do
+            var turn = turns[j];
+            max_red = call max max_red turn.red;
+            max_green = call max max_green turn.green;
+            max_blue = call max max_blue turn.blue;
+            j = j + 1;
+        end 
+        result = result + max_red * max_green * max_blue;        
+        i = i + 1;
+    end
+
+    println "Solution 2: ", result;
+end
+
+call sol1;
+call sol2;
