@@ -13,7 +13,7 @@ record Token start
     pos_y
 end
 
-func parse_line line line_idx start
+func get_tokens line line_idx start
     var i = 0;
     var tokens = call dl_create 10;
 
@@ -37,6 +37,12 @@ func parse_line line line_idx start
         i = i + 1;        
     end
     tokens = call dl_to_list tokens;
+    
+    return tokens;
+end
+
+func parse_line line line_idx start
+    var tokens = call get_tokens line line_idx;
 
     var result = 0, i = 0;
     while i < (len tokens) do
@@ -92,8 +98,85 @@ func sol1 start
     println "Solution 1: ", result;
 end
 
-func sol2 start
+func is_adjacent tok x y start
+    var tok_len = len tok.symbols;
+    return (x >= tok.pos_x) and (x < tok.pos_x + tok_len) and (y == tok.pos_y);
+end
 
+func contains tok dl_toks start
+    var i = 0;
+    var tok_ls = dl_toks.list;
+    while (i < dl_toks.current) do
+        var curr_tok = tok_ls[i];
+        if (tok.pos_x == curr_tok.pos_x) and (tok.pos_y == curr_tok.pos_y) then
+            return true;
+        end
+        i = i + 1;
+    end
+
+    return false;
+end
+
+func sol2 start
+    var i = 0, tokens = (call dl_create 100);
+    while i < (len ls) do
+        var toks = call get_tokens ls[i] i;
+        call dl_push tokens toks;
+        i = i + 1;
+    end
+    tokens = call dl_to_list tokens;
+
+    var x = 0, y = 0, result = 0;
+    while y < line_h do
+        var line = ls[y];
+        while x < line_w do
+            if line[x] != '*' then
+                x = x + 1;
+                continue;
+            end
+
+            var dx = -1, nums = call dl_create 5;
+            while dx < 2 do
+                var dy = -1;
+                while dy < 2 do
+                    var pos_x = x + dx;
+                    var pos_y = y + dy;
+                    if (pos_x < 0) or (pos_x >= line_w) or (pos_y < 0) or (pos_y >= line_h) then
+                        dy = dy + 1;
+                        continue;
+                    end
+
+                    var tok_line = tokens[pos_y];
+                    var i = 0;
+                    while i < (len tok_line) do
+                        var tok = tok_line[i];
+                        if (call is_adjacent tok pos_x pos_y) and !(call contains tok nums) then
+                            call dl_push nums tok;
+                        end
+                        i = i + 1;
+                    end
+                    
+                    dy = dy + 1;
+                end
+                dx = dx + 1;
+            end
+
+            nums = call dl_to_list nums;
+            if (len nums) == 2 then
+                var num1 = nums[0];
+                num1 = parse_int num1.symbols;
+                var num2 = nums[1];
+                num2 = parse_int num2.symbols;
+                result = result + num1 * num2;
+            end
+            x = x + 1;
+        end
+        y = y + 1;
+        x = 0;
+    end
+
+    println "Solution 2: ", result;
 end
 
 call sol1;
+call sol2;
