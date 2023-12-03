@@ -1,0 +1,99 @@
+import "String.hhl";
+import "DynList.hhl";
+
+var s = readfile "input.txt";
+var ls = call lines s;
+ls = call dl_to_list ls;
+var line_w = len ls[0];
+var line_h = len ls;
+
+record Token start
+    symbols
+    pos_x
+    pos_y
+end
+
+func parse_line line line_idx start
+    var i = 0;
+    var tokens = call dl_create 10;
+
+    while i < (len line) do
+        if line[i] != '.' then
+            if (call is_digit line[i]) then
+                var symbols = "";
+                var start_idx = i;
+                while (call is_digit line[i]) do
+                    symbols = symbols + line[i];
+                    i = i + 1;
+                    if i >= (len line) then
+                        break;
+                    end
+                end
+                call dl_push tokens (new Token(symbols, start_idx, line_idx));
+                continue;
+            end
+        end
+
+        i = i + 1;        
+    end
+    tokens = call dl_to_list tokens;
+
+    var result = 0, i = 0;
+    while i < (len tokens) do
+        var token = tokens[i];
+
+        var j = 0, found = false;
+        while j < (len token.symbols) do
+            var dx = -1;
+            while dx < 2 do
+                var dy = -1;
+                while dy < 2 do
+                    var pos_x = token.pos_x + dx + j;
+                    var pos_y = token.pos_y + dy;
+                    if (pos_x < 0) or (pos_x >= line_w) or (pos_y < 0) or (pos_y >= line_h) then
+                        dy = dy + 1;
+                        continue;
+                    end
+
+                    var line = ls[pos_y];
+                    var symbol = line[pos_x];
+
+                    if !(call is_digit symbol) and (symbol != '.') then
+                        result = result + (parse_int token.symbols);
+                        found = true;
+                        break;
+                    end
+                    dy = dy + 1;
+                end
+                if found then
+                    break;
+                end
+                dx = dx + 1;
+            end
+            if found then
+                break;
+            end
+            j = j + 1;
+        end
+        i = i + 1;
+    end
+
+    return result;
+end
+
+func sol1 start
+    var i = 0, result = 0;
+    while i < (len ls) do
+        var val = call parse_line ls[i] i;
+        result = result + val;
+        i = i + 1;
+    end
+
+    println "Solution 1: ", result;
+end
+
+func sol2 start
+
+end
+
+call sol1;
