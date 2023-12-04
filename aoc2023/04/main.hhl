@@ -1,0 +1,109 @@
+import "String.hhl";
+import "DynList.hhl";
+import "Option.hhl";
+import "HOF.hhl";
+
+var s = readfile "input.txt";
+var ls = call lines s;
+ls = call dl_to_list ls;
+
+func parse_num_list list start
+    var nums = call dl_create 10;
+    for i = 0; i < (len list); i += 1; do 
+        var token = call trim list[i];
+        if (len token) > 0 then
+            call dl_push nums (parse_int token);
+        end
+    end
+
+    return nums;
+end
+
+func parse_line line start
+    var idx = call str_find line ':';
+    idx = idx.some;
+    line = call substr line idx+1 (len line);
+
+    var parts = call split line '|';
+    parts = call dl_to_list parts;
+    parts = call map parts \a => return call dl_to_list (call split a ' ');;
+
+    var guesses = call dl_to_list (call parse_num_list parts[0]);
+    var winns = call parse_num_list parts[1];
+
+    var score = 0;
+    for i = 0; i < (len guesses); i += 1; do
+        if (call dl_contains winns guesses[i]) then
+            if score == 0 then
+                score = 1;
+            else
+                score *= 2;
+            end
+        end
+    end
+
+    return score;
+end
+
+func parse_line2 line start
+    var idx = call str_find line ':';
+    idx = idx.some;
+    line = call substr line idx+1 (len line);
+
+    var parts = call split line '|';
+    parts = call dl_to_list parts;
+    parts = call map parts \a => return call dl_to_list (call split a ' ');;
+
+    var guesses = call dl_to_list (call parse_num_list parts[0]);
+    var winns = call parse_num_list parts[1];
+
+    var matches = 0;
+    for i = 0; i < (len guesses); i += 1; do
+        if (call dl_contains winns guesses[i]) then
+            matches += 1;
+        end
+    end
+
+    return matches;
+end
+
+# reassing_idx does not work with +=, ...
+
+func sol1 start
+    var result = 0;
+    for i = 0; i < len(ls); i += 1; do
+        result += call parse_line ls[i];
+    end
+    println "Solution 1: ", result;
+end
+
+func sol2 start
+    var matches = [(len ls)]();
+    for i = 0; i < len(ls); i += 1; do
+        matches[i] = call parse_line2 ls[i];
+    end
+
+    var wins = [(len ls)]();
+    var pile = call dl_create (len ls);
+    for i = 0; i < len(ls); i += 1; do
+        call dl_push pile i;
+    end
+
+    while (pile.current) > 0 do
+        var idx = call dl_pop pile;
+
+        var match = matches[idx];
+        wins[idx] = wins[idx] + 1;
+
+        if match != 0 then
+            for i = idx + 1; i <= idx + match; i += 1; do
+                call dl_push pile i;
+            end
+        end
+    end
+
+    println "Solution 2: ", call sum wins;
+end
+
+call sol1;
+call sol2;
