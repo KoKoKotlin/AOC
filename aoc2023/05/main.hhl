@@ -1,0 +1,208 @@
+import "String.hhl";
+import "DynList.hhl";
+import "Option.hhl";
+import "HOF.hhl";
+
+var s = readfile "test.txt";
+var ls = call lines s;
+ls = call dl_to_list ls;
+
+record Range start
+    src_start
+    dest_start
+    length
+end
+
+record SeedRange start
+    start_idx
+    length
+end
+
+func parse_seeds line start
+    var idx = call str_find line ':';
+    idx = idx.some;
+    line = call substr line (idx+1) (len line);
+    line = call trim line;
+    line = call split line ' ';
+    var nums = call dl_to_list line;
+    nums = call map nums \a => return (parse_int a);;
+
+    return nums;
+end
+
+func parse_seeds2 line start
+    var idx = call str_find line ':';
+    idx = idx.some;
+    line = call substr line (idx+1) (len line);
+    line = call trim line;
+    line = call split line ' ';
+    var nums = call dl_to_list line;
+    nums = call map nums \a => return (parse_int a);;
+
+    var seed_ranges = call dl_create 10;
+    for i = 0; i < len(nums); i += 2; do
+        var start_idx = nums[i];
+        var range = nums[i+1];
+
+        call dl_push seed_ranges (new SeedRange (start_idx, range));
+    end
+
+    seed_ranges = call dl_to_list seed_ranges;
+    return seed_ranges;
+end
+
+func parse_block start_idx start
+    var ranges = call dl_create 10;
+    for i = start_idx; i < len(ls); i += 1; do
+        var line = ls[i];
+        line = call trim line;
+
+        if line == "" then
+            break;
+        end
+
+        var nums = call split line ' ';
+        nums = call dl_to_list nums;
+        var nums = call map nums \a => return (parse_int a);;
+        call dl_push ranges (new Range (nums[1], nums[0], nums[2]));
+    end
+
+    return call dl_to_list ranges;
+end
+
+func look_up id ranges start
+    for i = 0; i < len(ranges); i += 1; do
+        var range = ranges[i];
+        if (id >= range.src_start) and (id <= range.src_start + range.length) then
+            return range.dest_start + (id - range.src_start);
+        end 
+    end
+
+    return id;
+end
+
+func min x y start
+    if x < y then
+        return x;
+    else
+        return y;
+    end
+end
+
+func sol1 start
+    var seeds = ls[0];
+    seeds = call parse_seeds seeds;
+
+    var i = 3, idx = 0, mappings = [7]();
+    while i < (len ls) do    
+        var mapping = call parse_block i;
+        mappings[idx] = mapping;
+        i += 2 + len mapping;
+        idx += 1;
+    end
+
+    var result = -1;
+    for i = 0; i < len seeds; i += 1; do
+        var curr_id = seeds[i];
+        for j = 0; j < len mappings; j += 1; do
+            curr_id = call look_up curr_id mappings[j];
+        end
+        if result == -1 then
+            result = curr_id;
+        else
+            result = call min result curr_id;
+        end
+    end
+
+    println "Solution 1: ", result;
+end
+
+func sort_ranges ranges start
+    for i = 0; i < len ranges; i += 1; do
+        var range = ranges[i];
+        for j = i+1; j < len ranges; j += 1; do
+            var range2 = ranges[j];
+            if range.src_start > range2.src_start then
+                ranges[i] = range2;
+                ranges[j] = range;
+                range = range2;
+            end
+        end
+    end
+
+    return ranges;
+end
+
+func complete_mapping mapping start
+    var curr_id = 0;
+    var result = call dl_create 10;
+    for i = 0; i < len mapping; i += 1; do
+        var range = mapping[i];
+
+        if curr_id < range.src_start then
+            var diff = range.src_start - curr_id;
+            call dl_push result (new Range (curr_id, curr_id, diff));
+        end
+        
+        call dl_push result range;
+        curr_id = range.src_start + range.length + 1;
+    end
+
+    return call dl_to_list result;
+end
+
+func map_range range mappings start
+    var curr_id = range.src_start, ranges = call dl_create 10;
+    while curr_id < range.src_start + range.length do
+        for i = 0; i < len mappings; i += 1; do
+            var mapping = mappings[i];
+            curr_id = call look_up curr_id mapping;
+        end
+    end
+    
+    return new Range (curr_id, curr_id, range.length);
+end
+
+func sol2 start
+    var seeds = ls[0];
+    var seed_ranges = call parse_seeds2 seeds;
+
+    var i = 3, idx = 0, mappings = [7]();
+    while i < (len ls) do    
+        var mapping = call parse_block i;
+        mappings[idx] = mapping;
+        i += 2 + len mapping;
+        idx += 1;
+    end
+
+    mappings = call map mappings \a => return (call sort_ranges a);;
+    for i = 0; i < len mappings; i += 1; do
+        println mappings[i];
+    end
+    return false;
+
+    var result = -1;
+    for i = 0; i < len seed_ranges; i += 1; do
+        var range = seed_ranges[i];
+
+        var start_idx = range.start_idx;
+        var end_idx = range.start_idx + range.length;
+        for curr_start_id = start_idx; curr_start_id <= end_idx; curr_start_id += 1; do
+            var curr_id = curr_start_id;
+            for j = 0; j < len mappings; j += 1; do
+                curr_id = call look_up curr_id mappings[j];
+            end
+
+            if result == -1 then
+                result = curr_id;
+            else
+                result = call min result curr_id;
+            end
+        end
+    end
+
+    println "Solution 2: ", result;
+end
+
+call sol1;
+call sol2;
