@@ -1,0 +1,79 @@
+import "String.hhl";
+import "DynList.hhl";
+import "Math.hhl";
+
+var s = readfile "input.txt";
+var ls = call lines s;
+ls = call dl_to_list ls;
+
+func lower_bound time dist start
+    return (time - call sqrt ((time*time) - (4*dist))) / 2;
+end
+
+func upper_bound time dist start
+    return (time + call sqrt ((time*time) - (4*dist))) / 2;
+end
+
+func sol1 start
+    var times_str = call dl_to_list (call split ls[0] ' ');
+    var dist_str = call dl_to_list (call split ls[1] ' ');
+    
+    var times = call dl_create 10;
+    for i = 1; i < len times_str; i = i + 1; do
+        if times_str[i] != "" then
+            call dl_push times (parse_int times_str[i]);
+        end
+    end
+    times = call dl_to_list times;
+
+    var dist = call dl_create 10;
+    for i = 1; i < len dist_str; i = i + 1; do
+        if dist_str[i] != "" then
+            call dl_push dist (parse_int dist_str[i]);
+        end
+    end
+    dist = call dl_to_list dist;
+
+    var result = 1;
+    for i = 0; i < len times; i = i + 1; do
+        var lb = call lower_bound times[i] dist[i];
+        var ub = call upper_bound times[i] dist[i];
+        lb = floor lb;
+        ub = ceil ub;
+
+        result = result * (ub - lb + 1);
+    end
+
+    println "Solution 1: ", result;
+end
+
+func sol2 start
+    var times_str = call dl_to_list (call split ls[0] ' ');
+    var dist_str = call dl_to_list (call split ls[1] ' ');
+    
+    var time = "";
+    for i = 1; i < len times_str; i = i + 1; do
+        if times_str[i] != "" then
+            time += times_str[i];
+        end
+    end
+    time = parse_int time;
+
+    var dist = "";
+    for i = 1; i < len dist_str; i = i + 1; do
+        if dist_str[i] != "" then
+            dist += dist_str[i];
+        end
+    end
+    dist = parse_int dist;
+
+    var lb = call lower_bound time dist;
+    var ub = call upper_bound time dist;
+    lb = floor lb;
+    ub = ceil ub;
+
+    println "Solution 2: ", ub - lb + 1;
+end
+
+call sol1;
+call sol2;
