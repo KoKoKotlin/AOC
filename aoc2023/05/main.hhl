@@ -154,10 +154,12 @@ end
 func map_range range mappings start
     var curr_id = range.src_start, ranges = call dl_create 10;
     while curr_id < range.src_start + range.length do
+        
         for i = 0; i < len mappings; i += 1; do
             var mapping = mappings[i];
             curr_id = call look_up curr_id mapping;
         end
+    
     end
     
     return new Range (curr_id, curr_id, range.length);
