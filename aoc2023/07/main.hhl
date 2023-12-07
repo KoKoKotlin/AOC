@@ -1,0 +1,313 @@
+import "String.hhl";
+import "DynList.hhl";
+import "Math.hhl";
+
+var s = readfile "input.txt";
+var ls = call lines s;
+ls = call dl_to_list ls;
+
+record Hand start
+    cards
+    bit
+    type
+end
+
+let HIGH_CARD  = 0;
+let ONE_PAIR   = 1;
+let TWO_PAIRS  = 2;
+let THREE_OAK  = 3;
+let FULL_HOUSE = 4;
+let FOUR_OAK   = 5;
+let FIVE_OAK   = 6;
+
+func type_to_str t start
+    if t == HIGH_CARD then
+        return "HIGH_CARD";
+    end
+
+    if t == ONE_PAIR then
+        return "ONE_PAIR";
+    end
+
+    if t == TWO_PAIRS then
+        return "TWO_PAIRS";
+    end
+
+    if t == THREE_OAK then
+        return "THREE_OAK";
+    end
+
+    if t == FULL_HOUSE then
+        return "FULL_HOUSE";
+    end
+
+    if t == FOUR_OAK then
+        return "FOUR_OAK";
+    end
+
+    if t == FIVE_OAK then
+        return "FIVE_OAK";
+    end
+
+    return "UNKNOWN";
+end
+
+func parse_card c start
+    var cards;
+    cards = [13]('2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A');
+
+    var idx = call str_find cards c;
+
+    if idx.is_none then
+        println "Invalid card: ", c;
+        return 0;
+    end
+
+    return idx.some;
+end
+
+var cards2;
+cards2 = [13]('J', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'Q', 'K', 'A');
+
+func parse_card2 c start
+    var idx = call str_find cards2 c;
+
+    if idx.is_none then
+        println "Invalid card: ", c;
+        return 0;
+    end
+
+    return idx.some;
+end
+
+record FreqElem start
+    elem
+    freq
+end
+
+func get_freq l start
+    var elems = call dl_create 10;
+    for i = 0; i < (len l); i += 1; do
+        var elem = l[i];
+        var found = false;
+        for j = 0; j < elems.current; j += 1; do
+            var curr = call dl_get elems j;
+            if curr.elem == elem then
+                curr.freq += 1;
+                found = true;
+                break;
+            end
+        end
+
+        if !found then
+            call dl_push elems (new FreqElem (elem, 1));
+        end
+    end
+
+    return call dl_to_list elems;
+end
+
+func get_type cards start
+    var freqs = call get_freq cards;
+
+    for i = 0; i < (len freqs); i += 1; do
+        var freq = freqs[i];
+
+        if freq.freq == 5 then
+            return FIVE_OAK;
+        end
+
+        if freq.freq == 4 then
+            return FOUR_OAK;
+        end
+
+        if freq.freq == 3 then
+            for j = i + 1; j < (len freqs); j += 1; do
+                var freq2 = freqs[j];
+                if freq2.freq == 2 then
+                    return FULL_HOUSE;
+                end
+            end
+
+            return THREE_OAK;
+        end
+
+        if freq.freq == 2 then
+            for j = i + 1; j < (len freqs); j += 1; do
+                var freq2 = freqs[j];
+                if freq2.freq == 3 then
+                    return FULL_HOUSE;
+                end
+
+                if freq2.freq == 2 then
+                    return TWO_PAIRS;
+                end
+            end
+
+            return ONE_PAIR;
+        end
+    end
+
+    return HIGH_CARD;
+end
+
+func sub_j old_cards card start
+    var cards;
+    cards = [5]();
+
+    for i = 0; i < (len cards); i += 1; do
+        if old_cards[i] != 0 then
+            cards[i] = old_cards[i];
+        else
+            cards[i] = card;
+        end
+    end
+    
+    return cards;
+end
+
+func get_type2 cards_before start
+    var freqs_before = call get_freq cards_before;
+
+    var found_j = false;
+    var elem;
+    for i = 0; i < (len freqs_before); i += 1; do
+        var freq = freqs_before[i];
+        if freq.elem == 0 then
+            found_j = true;
+            elem = freq.elem;
+            break;
+        end
+    end
+
+    if !found_j then
+        return call get_type cards_before;
+    end
+
+    var result = HIGH_CARD;
+    for k = 0; k < (len freqs_before); k += 1; do
+        var freq_before = freqs_before[k];
+        var cards = call sub_j cards_before freq_before.elem;
+        var freqs = call get_freq cards;
+
+        var curr_result = call get_type cards;
+        result = call max result curr_result;
+    end
+
+    return result;
+end
+
+func parse_line2 line start
+    var cards;
+    cards = [5]();
+    
+    var parts = call dl_to_list (call split line ' ');
+    var raw_cards = parts[0];
+
+    for i = 0; i < (len raw_cards); i += 1; do
+        cards[i] = call parse_card2 raw_cards[i];
+    end
+
+    var bit = parse_int parts[1];
+
+    var type = call get_type2 cards;
+
+    return new Hand (cards, bit, type);
+end
+
+func parse_line line start
+    var cards;
+    cards = [5]();
+    
+    var parts = call dl_to_list (call split line ' ');
+    var raw_cards = parts[0];
+
+    for i = 0; i < (len raw_cards); i += 1; do
+        cards[i] = call parse_card raw_cards[i];
+    end
+
+    var bit = parse_int parts[1];
+
+    var type = call get_type cards;
+
+    return new Hand (cards, bit, type);
+end
+
+
+func compare_hands h1 h2 start
+    if h1.type > h2.type then
+        return 1;
+    end
+
+    if h1.type < h2.type then
+        return -1;
+    end
+
+    var cards1 = h1.cards;
+    var cards2 = h2.cards;
+    for i = 0; i < (len cards1); i += 1; do
+        if cards1[i] > cards2[i] then
+            return 1;
+        end
+
+        if cards1[i] < cards2[i] then
+            return -1;
+        end
+    end
+
+    return 0;
+end
+
+func sort_hands hands start
+    for i = 0; i < (len hands); i += 1; do
+        for j = i + 1; j < (len hands); j += 1; do
+            var h1 = hands[i];
+            var h2 = hands[j];
+
+            if (call compare_hands h1 h2) == 1 then
+                hands[i] = h2;
+                hands[j] = h1;
+            end
+        end
+    end
+end
+
+func sol1 start
+    var result = 0;
+    var hands = [(len ls)]();
+
+    for i = 0; i < (len ls); i += 1; do
+        hands[i] = call parse_line ls[i];
+    end
+
+    call sort_hands hands;
+
+    for i = 0; i < (len ls); i += 1; do
+        var h = hands[i];
+        result += (i + 1) * h.bit;
+    end
+
+    println "Solution 1: ", result;
+end
+
+func sol2 start
+    var result = 0;
+    var hands = [(len ls)]();
+
+    for i = 0; i < (len ls); i += 1; do
+        hands[i] = call parse_line2 ls[i];
+        var h = hands[i];
+    end
+
+    call sort_hands hands;
+
+    for i = 0; i < (len ls); i += 1; do
+        var h = hands[i];
+        result += (i + 1) * h.bit;
+    end
+
+    println "Solution 2: ", result;
+end
+
+call sol1;
+call sol2;
