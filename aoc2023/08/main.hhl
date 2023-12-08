@@ -1,0 +1,158 @@
+import "String.hhl";
+import "DynList.hhl";
+
+var s = readfile "input.txt";
+var ls = call lines s;
+ls = call dl_to_list ls;
+
+func parse_inst start
+    var data = ls[0], inst = call dl_create 10;
+    for i = 0; i < (len data); i += 1; do
+        var curr_char = data[i];
+
+        if curr_char == 'R' then
+            call dl_push inst 0;
+        else
+            call dl_push inst 1;
+        end
+    end
+
+    return call dl_to_list inst;
+end
+
+func parse_node_name name start
+    var result = 0;
+    for i = (len name) - 1; i >= 0; i -= 1; do
+        var r = (25 * result) + ((parse_int name[i]) - 65);
+        result = r;
+    end
+
+    return result;
+end
+
+record Node start
+    label 
+    left 
+    right 
+end
+
+func parse_nodes start
+    var graph = [26 * 26 * 26]();
+    for i = 2; i < (len ls); i += 1; do
+        var line = ls[i];
+        var parts = call split line ' ';
+        parts = call dl_to_list parts;
+        var idx = call parse_node_name parts[0];
+        var left = call substr parts[2] 1 4;
+        var right = call substr parts[3] 0 3;
+        left = call parse_node_name left;
+        right = call parse_node_name right;
+
+        graph[idx] = new Node(parts[0], left, right);
+    end
+
+    return graph;
+end
+
+func sol1 start
+    var instructions = call parse_inst;
+    var graph = call parse_nodes;
+
+    var res = 0;
+    var inst_idx = 0;
+    var curr_idx = 0;
+    var end_idx = call parse_node_name "ZZZ";
+    while curr_idx != end_idx do
+        var node = graph[curr_idx];
+        if (instructions[inst_idx]) == 0 then
+            curr_idx = node.right;
+        else
+            curr_idx = node.left;
+        end
+        
+        var next = graph[curr_idx];
+        next = next.label;
+
+        res += 1;
+        inst_idx += 1;
+        inst_idx %= (len instructions);
+    end
+
+    println "Solution 1: ", res;
+end
+
+record Loop start
+    length
+    start_idx
+end
+
+func sol2 start
+    var instructions = call parse_inst;
+    var graph = call parse_nodes;
+
+    var curr_nodes = call dl_create 10;
+    for i = 0; i < (len graph); i += 1; do
+        var n = graph[i];
+
+        if n != 0 then
+            var label = n.label;
+            if label[2] == 'A' then
+                call dl_push curr_nodes i;
+            end
+        end
+    end
+    curr_nodes = call dl_to_list curr_nodes;
+
+    var loops;
+    loops = [6]();
+
+    for i = 0; i < (len curr_nodes); i += 1; do
+        var curr_idx = curr_nodes[i];
+        var solved_once = false;
+        var inst_idx = 0;
+        var iters = 0;
+        var loop_start;
+
+        while true do
+            var node = graph[curr_idx];
+            var label = node.label;
+
+            if label[2] == 'Z' then
+                if solved_once then
+                    break;
+                else
+                    solved_once = true;
+                    loop_start = iters;
+                end
+            end
+
+            if (instructions[inst_idx]) == 0 then
+                curr_idx = node.right;
+            else
+                curr_idx = node.left;
+            end
+            
+            inst_idx += 1;
+            inst_idx %= (len instructions);
+            iters += 1;
+        end
+
+        loops[i] = new Loop(loop_start, iters - loop_start);
+    end
+
+    # output for wolfram alpha
+    # wolfram alpha used for calculating the least common multiple of the loop starts
+    # since the start and number of loop iterations are identical
+    print "{";
+    for i = 0; i < (len loops); i += 1; do
+        var l = loops[i];
+        print l.start_idx, ", ";
+    end
+    println "}";
+
+    var res = 0;
+    println "Solution 2: ", res;
+end
+
+call sol1;
+call sol2;
