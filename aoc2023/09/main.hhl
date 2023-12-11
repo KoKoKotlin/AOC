@@ -1,0 +1,52 @@
+import "String.hhl";
+import "DynList.hhl";
+import "HOF.hhl";
+
+var s = readfile "test.txt";
+var ls = call lines s;
+ls = call dl_to_list ls;
+
+func get_next nums_ls start
+    var new_nums = call dl_create 10;
+    var is_zero = true;
+    for i = 0; i < nums_ls.current - 1; i += 1; do
+        var a = call dl_get nums_ls i;
+        var b = call dl_get nums_ls (i + 1);
+        var diff = b - a;
+        is_zero = is_zero and (diff == 0);
+        call dl_push new_nums diff;
+    end
+    
+    if is_zero then
+        var last = call dl_get nums_ls (nums_ls.current - 1);
+        return last;
+    else
+        var diff = call get_next new_nums;
+        var last = call dl_get nums_ls (nums_ls.current - 1);
+        return last + diff;
+    end
+end
+
+func dl_copy ls start
+    var new_ls = call dl_create (len ls);
+    for i = 0; i < (len ls); i += 1; do
+        call dl_push new_ls ls[i];
+    end
+    return new_ls;
+end
+
+func sol1 start
+    var nums = call map ls \a => return call dl_to_list (call split a ' ');;
+    var nums = call map nums \a => return call map a \b => return parse_int b;;;
+    
+    var res = 0;
+    for i = 0; i < (len nums); i += 1; do
+        var curr = call dl_copy nums[i]; 
+        var next = call get_next curr;
+        res += next;
+    end
+
+    println "Solution 1: ", res;
+end
+
+call sol1;
