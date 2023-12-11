@@ -1,0 +1,195 @@
+import "String.hhl";
+import "DynList.hhl";
+import "Math.hhl";
+
+var s = readfile "input.txt";
+var ls = call lines s;
+ls = call dl_to_list ls;
+
+record Cell start
+    north
+    east
+    south
+    west
+    dist
+    before
+end
+
+func parse start
+    var grid = [(len ls)]();
+    for i = 0; i < (len ls); i += 1; do
+        grid[i] = [(len ls[i])]();
+    end
+
+    var s_y = 0, s_x = 0;
+
+    for y = 0; y < (len ls); y += 1; do
+        var line = ls[y];
+        var row = grid[y];
+        for x = 0; x < (len ls[y]); x += 1; do
+            var c = line[x];
+            if c == '.' then
+                row[x] = new Cell(false, false, false, false, 100000000, -1);
+            end
+
+            if c == '|' then
+                row[x] = new Cell(true, false, true, false, 100000000, -1);
+            end
+
+            if c == '-' then
+                row[x] = new Cell(false, true, false, true, 100000000, -1);
+            end
+            
+            if c == 'L' then
+                row[x] = new Cell(true, true, false, false, 100000000, -1);
+            end
+            
+            if c == 'J' then
+                row[x] = new Cell(true, false, false, true, 100000000, -1);
+            end
+            
+            if c == '7' then
+                row[x] = new Cell(false, false, true, true, 100000000, -1);
+            end
+
+            if c == 'F' then
+                row[x] = new Cell(false, true, true, false, 100000000, -1);
+            end
+
+            if c == 'S' then
+                s_y = y;
+                s_x = x;
+            end
+        end
+    end
+
+    if s_y > 0 then
+        var s_north = grid[s_y - 1];
+        s_north = s_north[s_x];
+    else 
+        var s_north = new Cell(false, false, false, false, 100000000, -1);
+    end
+    
+    if s_x > 0 then
+        var s_west = grid[s_y];
+        s_west = s_west[s_x - 1];
+    else 
+        var s_west = new Cell(false, false, false, false, 100000000, -1);
+    end
+
+    if s_y < (len grid) - 1 then
+        var s_south = grid[s_y + 1];
+        s_south = s_south[s_x];
+    else 
+        var s_south = new Cell(false, false, false, false, 100000000, -1);
+    end
+
+    if s_x < (len grid[s_y]) - 1 then
+        var s_east = grid[s_y];
+        s_east = s_east[s_x + 1];
+    else 
+        var s_east = new Cell(false, false, false, false, 100000000, -1);
+    end
+
+    var s = grid[s_y];
+    s[s_x] = new Cell(s_north.south, s_east.west, s_south.north, s_west.east, 0, -1);
+
+    return grid;
+end
+
+func get_nghb x y grid start
+    var res = call dl_create 4;
+    var h = len grid;
+    var w = len grid[0];
+
+    var curr = grid[y];
+    curr = curr[x];
+
+    if x > 0 then
+        var c = grid[y];
+        c = c[x - 1];
+
+        if c.east and curr.west then
+            call dl_push res ((y * h) + x - 1);
+        end
+    end
+
+    if x < w - 1 then
+        var c = grid[y];
+        c = c[x + 1];
+        if c.west and curr.east then
+            call dl_push res ((y * h) + x + 1);
+        end
+    end
+    
+    if y > 0 then
+        var c = grid[y - 1];
+        c = c[x];
+
+        if c.south and curr.north then
+            call dl_push res (((y - 1) * h) + x);
+        end
+    end
+    
+    if y < h - 1 then
+        var c = grid[y + 1];
+        c = c[x];
+
+        if c.north and curr.south then
+            call dl_push res (((y + 1) * h) + x);
+        end
+    end
+
+    return res;
+end
+
+func bellman_ford grid start
+    var n = (len grid) * (len grid[0]);
+    var h = len grid;
+    var w = len grid[0];
+    for iters = 0; iters < n; iters += 1; do
+        for y = 0; y < h; y += 1; do
+            for x = 0; x < w; x += 1; do
+                var curr_cell = grid[y];
+                curr_cell = curr_cell[x];
+
+                var nghb = call get_nghb x y grid;
+                for i = 0; i < nghb.current; i += 1; do
+                    var nghb_idx = call dl_get nghb i;
+                    var nghb_y = nghb_idx / h;
+                    var nghb_x = nghb_idx % h;
+
+                    var nghb_cell = grid[nghb_y];
+                    nghb_cell = nghb_cell[nghb_x];
+
+                    var new_dist = nghb_cell.dist + 1;
+                    if new_dist < curr_cell.dist then
+                        curr_cell.dist = new_dist;
+                        curr_cell.before = nghb_idx;
+                    end
+                end
+            end
+        end
+    end
+end
+
+func sol1 start
+    var res = 0;
+
+    var grid = call parse;
+    call bellman_ford grid;
+
+    for y = 0; y < (len grid); y += 1; do
+        var row = grid[y];
+        for x = 0; x < (len row); x += 1; do
+            var cell = row[x];
+            if cell.dist != 100000000 then
+                res = call max res cell.dist;
+            end
+        end
+    end
+
+    println "Solution 1: ", res;
+end
+
+call sol1;
