@@ -1,4 +1,5 @@
 import Data.List
+import Data.Ord
 import Debug.Trace
 import Control.Monad
 import Data.Maybe
@@ -8,12 +9,39 @@ filename = "data.txt"
 
 type PairInt = (Int, Int)
 
+data TokenType = Do | Dont | Mul
+instance Show TokenType where
+  show Do = "Do"
+  show Dont = "Dont"
+  show Mul = "Mul"
+instance Eq TokenType where
+  (==) :: TokenType -> TokenType -> Bool
+  Do == Do = True
+  Do == Dont = False
+  Do == Mul = False
+  Dont == Do = False
+  Dont == Dont = True
+  Dont == Mul = False
+  Mul == Do = False
+  Mul == Dont = False
+  Mul == Mul = True
+
 unwrap :: Maybe a -> a
 unwrap Nothing = error "This cannot happen"
 unwrap (Just x) = x
 
 findSubstring :: String -> String -> Maybe Int
 findSubstring needle haystack = findIndex (isPrefixOf needle) (tails haystack)
+
+findNext :: String -> Maybe (TokenType, Int)
+findNext str
+  | (length list) == 0 = Nothing
+  | otherwise = Just (minimumBy (comparing snd) list)
+  where
+    list = map (\(a, b) -> (a, unwrap b)) $ filter (\(_, b) -> isJust b) [a,b,c]
+    a = (Mul, findSubstring "mul(" str)
+    b = (Do, findSubstring "do()" str)
+    c = (Dont, findSubstring "don't()" str)
 
 take_substr :: Int -> String -> String
 take_substr n str = drop n str
@@ -58,11 +86,27 @@ sol1 content pos acc
       n = fst $ unwrap a
       vals = snd $ unwrap a
 
-sol2 = 0
+sol2 :: String -> Bool -> Int -> [PairInt] -> [PairInt]
+sol2 content active pos acc
+  | (length content) < pos = acc
+  | isNothing b = acc
+  | isJust b && ttype == Do = sol2 content True (pos+offset+4) acc
+  | isJust b && ttype == Dont = sol2 content False (pos+offset+7) acc 
+  | isJust b && ttype == Mul && isJust a = sol2 content active (pos+len) acc_mod
+  | isJust b && ttype == Mul && isNothing a = sol2 content active (pos+offset+4) acc
+    where
+      b = findNext s
+      offset = (snd . unwrap) b
+      ttype = (fst . unwrap) b
+      a = parse_next s (Just offset)
+      len = (fst . unwrap) a
+      val = (snd . unwrap) a
+      s = take_substr pos content
+      acc_mod = if active then acc ++ [val] else acc
 
 main :: IO ()
 main = do
   contents <- readFile filename
   putStrLn $ "Solution 1: " ++ (show $ foldl (\acc (x, y) -> acc + (x * y)) 0 (sol1 contents 0 []))
-  putStrLn $ "Solution 2: " ++ (show $ sol2)
+  putStrLn $ "Solution 2: " ++ (show $ foldl (\acc (x, y) -> acc + (x * y)) 0 (sol2 contents True 0 []))
   return ()
