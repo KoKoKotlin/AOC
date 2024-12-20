@@ -1,12 +1,11 @@
 from queue import Queue
 
-# FILE = "test.txt"
-FILE = "data.txt"
+FILE = "test3.txt"
+# FILE = "data.txt"
 
-UP = 0
-LEFT = 1
-RIGHT = 2
-DOWN = 3
+def unreachable(*args):
+    print("Unreachable", *args)
+    exit(-1)
 
 def get_nbhs(x, y, grid):
     cell = grid[y][x]
@@ -36,7 +35,7 @@ def calc_region_perim(region, grid):
                 boundaries += 1    
     return boundaries
 
-def sol1(grid):
+def get_regions(grid):
     done_cells = set()
     w = len(grid[0])
     h = len(grid)
@@ -57,12 +56,59 @@ def sol1(grid):
                 for ncell in get_nbhs(*cell, grid):
                     next_cells.put(ncell)
             regions.append(curr_region)
+    return regions
+
+def sol1(grid):
+    regions = get_regions(grid)
     res = sum(len(region) * calc_region_perim(region, grid) for region in regions)
     print("Solution 1:", res)
 
-def sol2(grid):
-    pass
+UP = (0, -1)
+DOWN = (0, 1)
+LEFT = (-1, 0)
+RIGHT = (1, 0)
 
+def dirToStr(dx, dy):
+    match (dx, dy):
+        case (0, -1): return "UP"
+        case (0, 1): return "DOWN"
+        case (-1, 0): return "LEFT"
+        case (1, 0): return "RIGHT"
+        case _: unreachable()
+
+def count_sides(region):
+    sides = 0
+    next_cells = Queue()
+    next_cells.put(region[0])
+    done_cells = set()
+    walls = {
+        "UP": [],
+        "DOWN": [],
+        "LEFT": [],
+        "RIGHT": [],
+    }
+    while not next_cells.empty():
+        x, y = next_cells.get()
+        done_cells.add(str([x, y]))
+        for dx, dy in [UP, DOWN, LEFT, RIGHT]:
+            cx, cy = x + dx, y + dy
+            if [cx, cy] in region and str([cx, cy]) not in done_cells:
+                next_cells.put([cx, cy])
+            else:
+                w = walls[dirToStr(dx, dy)]
+                if (dx, dy) in [LEFT, RIGHT] and [cx, cy+1] not in w and [cx, cy-1] not in w:
+                    sides += 1
+                elif (dx, dy) in [UP, DOWN] and [cx+1, cy] not in w and [cx-1, cy] not in w:
+                    sides += 1
+                walls[dirToStr(dx, dy)].append([cx, cy])
+    return sides
+def sol2(grid):
+    w = len(grid[0])
+    h = len(grid)
+    regions = get_regions(grid)
+    res = sum(len(region) * count_sides(region) for region in regions)
+    print("Solution 2:", res)
+    
 def main():
     with open(FILE, "r") as f:
         grid = [[c for c in line.strip()] for line in f]
