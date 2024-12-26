@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from copy import deepcopy
 
-FILE = "test.txt"
-FILE = "data.txt"
+#FILE, THRESHOLD = "test.txt", 10
+FILE, THRESHOLD = "data.txt", 100
 
 @dataclass
 class Node:
@@ -46,26 +46,24 @@ def sol1(grid, start, end):
     res = 0
     for y in range(h):
         for x in range(w-1):
+            if not(cgrid[y][x] == "#" and cgrid[y][x+1] != "#"): continue
+            cgrid = deepcopy(grid)
             cgrid[y][x] = "."
             cgrid[y][x+1] = "."
             l = dijkstra(cgrid, start, end)
-            cgrid[y][x] = grid[y][x]
-            cgrid[y][x+1] = grid[y][x+1]
 
-            if baseline - l >= 100:
-                print(baseline - l, "saved")
+            if baseline - l >= THRESHOLD:
                 res += 1
 
     for y in range(h-1):
         for x in range(w):
+            if not(cgrid[y][x] == "#" and cgrid[y+1][x] != "#"): continue
+            cgrid = deepcopy(grid)
             cgrid[y][x] = "."
             cgrid[y+1][x] = "."
             l = dijkstra(cgrid, start, end)
-            cgrid[y][x] = grid[y][x]
-            cgrid[y+1][x] = grid[y+1][x]
 
-            if baseline - l >= 100:
-                print(baseline - l, "saved")
+            if baseline - l >= THRESHOLD:
                 res += 1
 
     print("Solution 1:", res)
