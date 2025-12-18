@@ -50,7 +50,35 @@ def sol1():
     print("Solution 1:", cmps[0] * cmps[1] * cmps[2])
     
 def sol2():
-    pass
+    adj_matrix = [(dist(coords[i], coords[j]), i, j)
+                  for i in range(len(coords)) 
+                  for j in range(i+1, len(coords)) 
+                  if i != j]
+    adj_matrix = sorted(adj_matrix, key=lambda x: x[0])
+
+    cmps = [0] * len(coords)
+    last_cmp_idx = 0
+    for i in range(len(adj_matrix)):
+        _, idx1, idx2 = adj_matrix[i]
+        cmp1, cmp2 = cmps[idx1], cmps[idx2]
+        if cmp1 == 0 and cmp2 == 0:
+            last_cmp_idx += 1
+            cmps[idx1] = last_cmp_idx
+            cmps[idx2] = last_cmp_idx
+        elif cmp1 != 0 and cmp2 == 0:
+            cmps[idx2] = cmp1
+        elif cmp1 == 0 and cmp2 != 0:
+            cmps[idx1] = cmp2
+        else:
+            if cmp1 == cmp2: continue
+            for j in range(len(cmps)):
+                if cmps[j] == cmp2: cmps[j] = cmp1
+        
+        if len(set(cmps)) == 1 and cmps[0] != 0: break
+    entry = adj_matrix[i]
+    coord1 = coords[entry[1]]
+    coord2 = coords[entry[2]]
+    print("Solution 2:", coord1[0] * coord2[0])
 
 def main():
     sol1()
